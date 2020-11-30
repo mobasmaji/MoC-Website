@@ -70,7 +70,7 @@ export default Vue.extend({
     currentLng: 0,
   }),
   mounted() {
-    this.requests = new Requests("192.168.0.122", "3000");
+    this.requests = new Requests("localhost", "3000");
     this.initMap();
     this.initLocation();
     this.initMarkers();
