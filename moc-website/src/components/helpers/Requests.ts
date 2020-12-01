@@ -8,6 +8,7 @@ const postData = async (url: string, method: string, data?: any) => {
     method: "POST",
     mode: "cors",
     headers: {
+      'Authorization': 'Bearer ' + localStorage.getItem("jwt"),
       "Content-Type": "application/json"
     },
     body: JSON.stringify(data)
@@ -39,7 +40,7 @@ export interface MarkerArgs {
   lng: number;
   description: string;
   type: string;
-  shareWith: Array<string>;
+  share: boolean;
 }
 export class Requests {
 
@@ -56,7 +57,7 @@ export class Requests {
    * @param args 
    */
   public async addMarker(args: MarkerArgs): Promise<MyResponse> {
-    return postData("http://" + this.ip + ":" + this.port + "/marker/add", "GET", args)
+    return postData("http://" + this.ip + "/marker/add", "GET", args)
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -69,7 +70,7 @@ export class Requests {
    * Gets the markers
    */
   public async getMarkers(username: string): Promise<MyResponse> {
-    return postData("http://" + this.ip + ":" + this.port + "/marker/getAll", "GET", { username: username })
+    return postData("http://" + this.ip + "/marker/getAll", "GET", { username: username })
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -81,7 +82,7 @@ export class Requests {
    * Gets the shared markers
    */
   public async getSharedMarkers(username: string): Promise<MyResponse> {
-    return postData("http://" + this.ip + ":" + this.port + "/marker/getShared", "GET", { username: username })
+    return postData("http://" + this.ip + "/marker/getShared", "GET", { username: username })
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -92,22 +93,25 @@ export class Requests {
   /**
    * Logs the user in
    */
-  public async login(args: LoginArgs): Promise<any> {
-    return postData("http://" + this.ip + ":" + this.port + "/user/login", "POST", args)
+  public async login(args: LoginArgs): Promise<MyResponse> {
+    return postData("http://" + this.ip + "/user/login", "POST", args)
       .then(response => {
-        return { status: RequestStatus.SUCCESS, data: response.data };
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: {} };
+        }
+        return { status: RequestStatus.SUCCESS, data: response };
       })
       .catch(error => {
-        return { status: RequestStatus.ERROR, data: {} };
+        return { status: RequestStatus.ERROR, data: error };
       });
   }
   /**
    * Logs the user out
    */
   public async logout(): Promise<any> {
-    return postData("http://" + this.ip + ":" + this.port + "/user/logout", "POST")
+    return postData("http://" + this.ip + "/user/logout", "POST")
       .then(response => {
-        return { status: RequestStatus.SUCCESS, data: response.data };
+        return { status: RequestStatus.SUCCESS, data: response };
       })
       .catch(error => {
         return { status: RequestStatus.ERROR, data: {} };
@@ -117,7 +121,7 @@ export class Requests {
    * Registers a new user
    */
   public async register(args: RegisterArgs): Promise<any> {
-    return postData("http://" + this.ip + ":" + this.port + "/map_config/get_stations", "POST", args)
+    return postData("http://" + this.ip + "/map_config/get_stations", "POST", args)
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })

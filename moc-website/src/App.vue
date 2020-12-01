@@ -3,7 +3,7 @@
     <v-app-bar app dense>
     <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
     <!-- -->
-  </v-app-bar>
+    </v-app-bar>
   <!-- Sizes your content based upon application components -->
   <v-main>
     <!-- Provides the application the proper gutter -->
