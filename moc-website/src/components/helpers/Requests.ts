@@ -57,7 +57,7 @@ export class Requests {
    * @param args 
    */
   public async addMarker(args: MarkerArgs): Promise<MyResponse> {
-    return postData("http://" + this.ip + "/marker/add", "GET", args)
+    return postData("https://" + this.ip + "/marker/add", "GET", args)
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -70,7 +70,7 @@ export class Requests {
    * Gets the markers
    */
   public async getMarkers(username: string): Promise<MyResponse> {
-    return postData("http://" + this.ip + "/marker/getAll", "GET", { username: username })
+    return postData("https://" + this.ip + "/marker/getAll", "GET", { username: username })
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -82,7 +82,7 @@ export class Requests {
    * Gets the shared markers
    */
   public async getSharedMarkers(username: string): Promise<MyResponse> {
-    return postData("http://" + this.ip + "/marker/getShared", "GET", { username: username })
+    return postData("https://" + this.ip + "/marker/getShared", "GET", { username: username })
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -94,7 +94,7 @@ export class Requests {
    * Logs the user in
    */
   public async login(args: LoginArgs): Promise<MyResponse> {
-    return postData("http://" + this.ip + "/user/login", "POST", args)
+    return postData("https://" + this.ip + "/user/login", "POST", args)
       .then(response => {
         if (response.err) {
           return { status: RequestStatus.ERROR, data: {} };
@@ -109,7 +109,7 @@ export class Requests {
    * Logs the user out
    */
   public async logout(): Promise<any> {
-    return postData("http://" + this.ip + "/user/logout", "POST")
+    return postData("https://" + this.ip + "/user/logout", "POST")
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response };
       })
@@ -121,7 +121,7 @@ export class Requests {
    * Registers a new user
    */
   public async register(args: RegisterArgs): Promise<any> {
-    return postData("http://" + this.ip + "/map_config/get_stations", "POST", args)
+    return postData("https://" + this.ip + "/map_config/get_stations", "POST", args)
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
