@@ -197,7 +197,8 @@ export default Vue.extend({
     async initMarkers() {
       this.myMarkers = new L.FeatureGroup();
       // request then add markers
-      const res = await this.requests.getMarkers("mo");
+      const username = localStorage.getItem("username") as string;
+      const res = await this.requests.getMarkers(username);
       if (res.status == RequestStatus.ERROR) {
         alert("error");
       }
@@ -284,9 +285,9 @@ export default Vue.extend({
         lat: this.currentLat,
         lng: this.currentLng,
       })
-        .addTo(this.map)
+        .addTo(this.myMarkers)
         .on("click", () => {
-          alert("mo" + "'s marker");
+          alert("your marker");
         });
     },
     getUID() {
