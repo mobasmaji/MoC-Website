@@ -9,12 +9,12 @@
     <v-container class="d-flex justify-center">
       <v-toolbar absolute rounded="pill" dense class="ma-4">
         <v-app-bar-nav-icon @click="showList = true"></v-app-bar-nav-icon>
-        <v-divider inset></v-divider>
+        <v-divider></v-divider>
         <v-btn fab dark small color="red" v-if="logged" @click="logoutCallback">
           <v-icon>mdi-account-off</v-icon>
           <v-tooltip>Logout</v-tooltip>
         </v-btn>
-        <v-divider v-if="logged" inset></v-divider>
+        <v-divider v-if="logged"></v-divider>
 
         <v-btn
           fab
@@ -27,7 +27,7 @@
           <v-icon>mdi-account-plus</v-icon>
           <v-tooltip>Sign-up</v-tooltip>
         </v-btn>
-        <v-divider v-if="!logged" inset></v-divider>
+        <v-divider v-if="!logged"></v-divider>
 
         <v-btn
           fab
@@ -40,7 +40,7 @@
           <v-icon>mdi-account-key</v-icon>
           <v-tooltip>Login</v-tooltip>
         </v-btn>
-        <v-divider v-if="!logged" inset></v-divider>
+        <v-divider v-if="!logged"></v-divider>
         <v-btn icon to="/About">
           <v-icon>mdi-information</v-icon>
         </v-btn>
@@ -315,7 +315,7 @@
 
     <!-- Popup when clicked on me -->
     <!-- Popup when clicked on markers -->
-    <v-navigation-drawer right absolute v-model="showMarkerDialog">
+    <v-dialog max-width="290" v-model="showMarkerDialog">
       <v-list>
         <v-divider></v-divider>
         <v-list-item>
@@ -335,12 +335,8 @@
         </v-list-item>
         <v-divider></v-divider>
         <v-subheader>Coordinates</v-subheader>
-        <v-list-item>
-          Latitude: {{ clickedMarker.lat }}
-        </v-list-item>
-        <v-list-item>
-          Longitude: {{ clickedMarker.lng }}
-        </v-list-item>
+        <v-list-item> Latitude: {{ clickedMarker.lat }} </v-list-item>
+        <v-list-item> Longitude: {{ clickedMarker.lng }} </v-list-item>
         <v-divider></v-divider>
         <v-subheader>Type</v-subheader>
         <v-list-item>
@@ -350,9 +346,10 @@
 
         <v-subheader>Image</v-subheader>
         <v-list-item> No Image </v-list-item>
-
+        <v-divider></v-divider>
+        <v-btn @click="showMarkerDialog  = false" color="blue darken-1" text> Ok </v-btn>
       </v-list>
-    </v-navigation-drawer>
+    </v-dialog>
   </div>
 </template>
 
@@ -478,7 +475,8 @@ export default Vue.extend({
             .addTo(this.map)
             .on("click", () => {
               this.showMePopup = true;
-            }).bindPopup("your Location")
+            })
+            .bindPopup("your Location");
           this.map.setView(
             new L.LatLng(position.coords.latitude, position.coords.longitude),
             this.map.getMaxZoom()
@@ -739,7 +737,7 @@ export default Vue.extend({
 <style scoped>
 @import url("https://unpkg.com/leaflet@1.7.1/dist/leaflet.css");
 #leafletMap {
-  height: 100vh;
+  height: 99vh;
   z-index: 0;
 }
 </style>
