@@ -81,8 +81,8 @@ export class Requests {
   /**
    * Gets the shared markers
    */
-  public async getSharedMarkers(username: string): Promise<MyResponse> {
-    return postData("https://" + this.ip + "/marker/getShared", "GET", { username: username })
+  public async getSharedMarkers(): Promise<MyResponse> {
+    return postData("https://" + this.ip + "/marker/getShared", "GET")
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })

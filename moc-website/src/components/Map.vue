@@ -133,10 +133,10 @@
                   label="Marker's name"
                   required
                 ></v-text-field>
-                <v-text-field
+                <v-textarea
                   v-model="description"
                   label="Description"
-                ></v-text-field>
+                ></v-textarea>
                 <v-select
                   v-model="type"
                   :items="['Nature', 'Building', 'Status', 'I just Like it!']"
@@ -314,9 +314,45 @@
     </v-btn>
 
     <!-- Popup when clicked on me -->
-    <!-- Popup when clicked on my marker -->
+    <!-- Popup when clicked on markers -->
+    <v-navigation-drawer right absolute v-model="showMarkerDialog">
+      <v-list>
+        <v-divider></v-divider>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>
+              <h1>{{ clickedMarker.title }}</h1>
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              Owned by: {{ clickedMarker.owner }}
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-subheader>Description</v-subheader>
+        <v-list-item>
+          {{ clickedMarker.description }}
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-subheader>Coordinates</v-subheader>
+        <v-list-item>
+          Latitude: {{ clickedMarker.lat }}
+        </v-list-item>
+        <v-list-item>
+          Longitude: {{ clickedMarker.lng }}
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-subheader>Type</v-subheader>
+        <v-list-item>
+          {{ clickedMarker.type }}
+        </v-list-item>
+        <v-divider></v-divider>
 
-    <!-- Popup when clicked on shared marker -->
+        <v-subheader>Image</v-subheader>
+        <v-list-item> No Image </v-list-item>
+
+      </v-list>
+    </v-navigation-drawer>
   </div>
 </template>
 
@@ -377,6 +413,16 @@ export default Vue.extend({
     showMePopup: false,
     showMyMarkerPopup: false,
     showSharedMarkerPopup: false,
+    // marker args to show in dialog
+    showMarkerDialog: false,
+    clickedMarker: {
+      title: "",
+      description: "",
+      owner: "",
+      type: "",
+      lat: 0,
+      lng: 0,
+    },
   }),
   mounted() {
     if (!localStorage.getItem("jwt")) {
@@ -432,7 +478,7 @@ export default Vue.extend({
             .addTo(this.map)
             .on("click", () => {
               this.showMePopup = true;
-            });
+            }).bindPopup("your Location")
           this.map.setView(
             new L.LatLng(position.coords.latitude, position.coords.longitude),
             this.map.getMaxZoom()
@@ -467,7 +513,15 @@ export default Vue.extend({
         )
           .addTo(this.myMarkers)
           .on("click", () => {
-            alert(marker.username + "'s marker");
+            this.clickedMarker = {
+              title: marker.name,
+              type: marker.type,
+              description: marker.description,
+              owner: marker.username,
+              lat: marker.lat,
+              lng: marker.lng,
+            };
+            this.showMarkerDialog = true;
           });
         this.myMarkersList.push({
           id: marker.id,
@@ -480,7 +534,7 @@ export default Vue.extend({
     async initSharedMarkers() {
       this.sharedMarkers = new L.FeatureGroup();
       this.sharedMarkers.addTo(this.map);
-      const res = await this.requests.getSharedMarkers("mo");
+      const res = await this.requests.getSharedMarkers();
       for (const marker of res.data) {
         if (marker.username == localStorage.getItem("username")) {
           continue;
@@ -498,8 +552,16 @@ export default Vue.extend({
           }
         )
           .addTo(this.sharedMarkers)
-          .on("click", () => {
-            alert(marker.username + "'s marker");
+          .on("click", (e) => {
+            this.clickedMarker = {
+              title: marker.name,
+              type: marker.type,
+              description: marker.description,
+              owner: marker.username,
+              lat: marker.lat,
+              lng: marker.lng,
+            };
+            this.showMarkerDialog = true;
           });
         this.sharedMarkersList.push({
           id: marker.id,
