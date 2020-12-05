@@ -2,13 +2,121 @@
   <!-- Add marker burton -->
 
   <div id="root">
-    <v-btn dark color="indigo" block v-on:click="addButtonClickHandler">
-      <v-icon dark> mdi-plus </v-icon>
-    </v-btn>
     <!-- Leaflet container-->
 
     <div id="leafletMap"></div>
+    <!-- Floating toolbar -->
+    <v-container class="d-flex justify-center">
+      <v-toolbar absolute rounded="pill" dense class="ma-4">
+        <v-app-bar-nav-icon @click="showList = true"></v-app-bar-nav-icon>
+        <v-divider inset></v-divider>
+        <v-btn fab dark small color="red" v-if="logged" @click="logoutCallback">
+          <v-icon>mdi-account-off</v-icon>
+          <v-tooltip>Logout</v-tooltip>
+        </v-btn>
+        <v-divider v-if="logged" inset></v-divider>
 
+        <v-btn
+          fab
+          dark
+          small
+          color="green"
+          v-if="!logged"
+          @click="signUpDialog = true"
+        >
+          <v-icon>mdi-account-plus</v-icon>
+          <v-tooltip>Sign-up</v-tooltip>
+        </v-btn>
+        <v-divider v-if="!logged" inset></v-divider>
+
+        <v-btn
+          fab
+          dark
+          small
+          color="indigo"
+          v-if="!logged"
+          @click="loginDialog = true"
+        >
+          <v-icon>mdi-account-key</v-icon>
+          <v-tooltip>Login</v-tooltip>
+        </v-btn>
+        <v-divider v-if="!logged" inset></v-divider>
+        <v-btn icon to="/About">
+          <v-icon>mdi-information</v-icon>
+        </v-btn>
+      </v-toolbar>
+    </v-container>
+    <!-- List of Markers -->
+    <v-navigation-drawer absolute v-model="showList">
+      <v-list>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title class="title">
+              Available Markers
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              Here you click markers!
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-divider></v-divider>
+        <!-- List of my markers-->
+        <v-subheader>My Markers</v-subheader>
+        <template v-if="myMarkersList.length !== 0">
+          <v-list-item v-for="item in myMarkersList" :key="item.id">
+            <v-list-item-avatar>
+              <v-icon color="blue">mdi-map-marker</v-icon>
+            </v-list-item-avatar>
+
+            <v-list-item-content>
+              <v-list-item-title v-text="item.title"></v-list-item-title>
+
+              <v-list-item-subtitle
+                v-text="item.lat + ','"
+              ></v-list-item-subtitle>
+              <v-list-item-subtitle v-text="item.lat"></v-list-item-subtitle>
+            </v-list-item-content>
+
+            <v-list-item-action>
+              <v-btn icon @click="goToMarker(item)">
+                <v-icon>mdi-arrow-right-thick</v-icon>
+              </v-btn>
+            </v-list-item-action>
+          </v-list-item>
+        </template>
+        <v-list-item-subtitle v-else class="pa-2">
+          You don't have markers yet</v-list-item-subtitle
+        >
+
+        <!-- List of shared markers-->
+        <v-subheader>Shared Markers</v-subheader>
+        <template v-if="sharedMarkersList.length !== 0">
+          <v-list-item v-for="item in sharedMarkersList" :key="item.id">
+            <v-list-item-avatar>
+              <v-icon color="orange">mdi-map-marker</v-icon>
+            </v-list-item-avatar>
+
+            <v-list-item-content>
+              <v-list-item-title v-text="item.title"></v-list-item-title>
+
+              <v-list-item-subtitle
+                v-text="item.lat + ','"
+              ></v-list-item-subtitle>
+              <v-list-item-subtitle v-text="item.lng"></v-list-item-subtitle>
+            </v-list-item-content>
+
+            <v-list-item-action>
+              <v-btn icon @click="goToMarker(item)">
+                <v-icon>mdi-arrow-right-thick</v-icon>
+              </v-btn>
+            </v-list-item-action>
+          </v-list-item>
+        </template>
+        <v-list-item-subtitle v-else class="pa-2"
+          >There are no shared markers</v-list-item-subtitle
+        >
+      </v-list>
+    </v-navigation-drawer>
     <!-- Add marker dialog -->
 
     <v-dialog v-model="addMarkerDialog" max-width="290">
@@ -66,6 +174,7 @@
             places!</v-card-subtitle
           >
         </v-card-title>
+
         <v-card-text>
           <v-container>
             <v-row>
@@ -79,15 +188,28 @@
                   v-model="password"
                   :append-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
                   :type="showPass ? 'text' : 'password'"
-                  hint="Tipp: enter at least 8 characters"
                   counter
                   @click:append="showPass = !showPass"
                   label="Password"
                   required
+                  :error-messages="loginError"
                 ></v-text-field>
               </v-col>
             </v-row>
           </v-container>
+        </v-card-text>
+        <v-card-text>
+          <v-card-subtitle>or </v-card-subtitle>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="
+              loginDialog = false;
+              signUpDialog = true;
+            "
+          >
+            Sign-up
+          </v-btn>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -95,6 +217,63 @@
             Close
           </v-btn>
           <v-btn color="blue darken-1" text @click="loginCallback">
+            Login
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <!-- A sign-up dialog -->
+
+    <v-dialog v-model="signUpDialog" max-width="290">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Sign-up</span>
+          <v-card-subtitle
+            >Sign up for an account to add and see your own
+            places!</v-card-subtitle
+          >
+        </v-card-title>
+        <v-card-text>
+          <v-container>
+            <v-row>
+              <v-col>
+                <v-text-field
+                  v-model="sUsername"
+                  label="Username"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="sPass"
+                  :append-icon="sShowPass ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="sShowPass ? 'text' : 'password'"
+                  hint="Tipp: enter at least 8 characters"
+                  counter
+                  @click:append="sShowPass = !sShowPass"
+                  label="Password"
+                  required
+                  :rules="[passLength, passContainsNum]"
+                ></v-text-field>
+                <v-text-field
+                  v-model="sConfirmPass"
+                  :append-icon="sShowPass ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="sShowPass ? 'text' : 'password'"
+                  hint="Enter password again"
+                  counter
+                  @click:append="sShowPass = !sShowPass"
+                  label="Confirm password"
+                  required
+                  :rules="[passMatch]"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="signUpDialog = false">
+            Close
+          </v-btn>
+          <v-btn color="blue darken-1" text @click="signUpCallback">
             Save
           </v-btn>
         </v-card-actions>
@@ -105,15 +284,46 @@
       {{ alertText }}
     </v-alert>
     <!-- position buttons -->
-    <v-btn fixed fab dark large bottom right color="indigo" @click="goToLocation">
-      <v-icon dark> mdi-map-marker </v-icon>
+    <v-btn
+      fixed
+      fab
+      dark
+      large
+      bottom
+      left
+      color="indigo"
+      @click="goToLocation"
+      class="ma-2"
+    >
+      <v-icon dark> mdi-crosshairs-gps </v-icon>
     </v-btn>
+    <!-- button to add markers -->
+    <v-btn
+      fixed
+      fab
+      dark
+      large
+      bottom
+      right
+      color="indigo"
+      @click="addButtonClickHandler"
+      dense
+      class="ma-2"
+    >
+      <v-icon dark> mdi-plus </v-icon>
+    </v-btn>
+
+    <!-- Popup when clicked on me -->
+
+    <!-- Popup when clicked on my marker -->
+
+    <!-- Popup when clicked on shared marker -->
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import L, { geoJSON, LatLng } from "leaflet";
+import L from "leaflet";
 import { Requests, RequestStatus } from "./helpers/Requests";
 export default Vue.extend({
   name: "Map",
@@ -126,32 +336,65 @@ export default Vue.extend({
     me: {} as L.Marker,
     addMarkerDialog: false,
     loginDialog: false,
+    signUpDialog: false,
     name: "",
     description: "",
     type: "",
     currentLat: 0,
     currentLng: 0,
     radioButtonValue: "no",
-    // auth
+    zooming: false,
+    showList: false,
+    // login
     username: "",
     password: "",
     showPass: false,
+    loginError: "",
+    logged: false,
     // alert
     alertToggle: false,
     alertText: "",
     alertType: "success",
+    // sign-up
+    sUsername: "",
+    sPass: "",
+    sConfirmPass: "",
+    sError: false,
+    sShowPass: false,
+    // Fab
+    accountFab: false,
+    myMarkersList: [] as {
+      id: string;
+      title: string;
+      lat: number;
+      lng: number;
+    }[],
+    sharedMarkersList: [] as {
+      id: string;
+      title: string;
+      lat: number;
+      lng: number;
+    }[],
+    showMePopup: false,
+    showMyMarkerPopup: false,
+    showSharedMarkerPopup: false,
   }),
   mounted() {
     if (!localStorage.getItem("jwt")) {
       this.loginDialog = true;
     }
+    this.logged = this.loggedIn();
     this.requests = new Requests("moc-backend.azurewebsites.net", "3000");
     this.initMap();
     this.initLocation();
     this.initMarkers();
     this.initSharedMarkers();
     this.initLayerControl();
-    setInterval(() => this.refreshLocation(), 100);
+  },
+  watch: {
+    password: function () {
+      this.loginError = "";
+    },
   },
   methods: {
     initMap() {
@@ -161,9 +404,15 @@ export default Vue.extend({
       });
       this.tileLayer = L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
         attribution:
-          '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+          '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
         zIndex: 1,
       }).addTo(this.map);
+      this.map.on("zoomstart", () => {
+        this.zooming = true;
+      });
+      this.map.on("zoomend", () => {
+        this.zooming = false;
+      });
     },
 
     initLocation() {
@@ -177,25 +426,27 @@ export default Vue.extend({
             {
               icon: new L.Icon({
                 iconUrl: require("../assets/locationIcon.png"),
-                iconSize: [30, 30],
+                iconSize: [55, 50],
               }),
             }
           )
             .addTo(this.map)
             .on("click", () => {
-              alert("your location");
+              this.showMePopup = true;
             });
           this.map.setView(
             new L.LatLng(position.coords.latitude, position.coords.longitude),
             this.map.getMaxZoom()
           );
         });
+        setInterval(() => this.refreshLocation(), 300);
       } else {
-        alert("no geo location");
+        alert("no geoss location");
       }
     },
     async initMarkers() {
       this.myMarkers = new L.FeatureGroup();
+      this.myMarkers.addTo(this.map);
       // request then add markers
       const username = localStorage.getItem("username") as string;
       const res = await this.requests.getMarkers(username);
@@ -210,8 +461,8 @@ export default Vue.extend({
           },
           {
             icon: new L.Icon({
-              iconUrl: require("../assets/markerIcon.jpg"),
-              iconSize: [30, 30],
+              iconUrl: require("../assets/markerIcon.png"),
+              iconSize: [50, 50],
             }),
           }
         )
@@ -219,12 +470,22 @@ export default Vue.extend({
           .on("click", () => {
             alert(marker.username + "'s marker");
           });
+        this.myMarkersList.push({
+          id: marker.id,
+          title: marker.name,
+          lat: marker.lat,
+          lng: marker.lng,
+        });
       }
     },
     async initSharedMarkers() {
       this.sharedMarkers = new L.FeatureGroup();
+      this.sharedMarkers.addTo(this.map);
       const res = await this.requests.getSharedMarkers("mo");
       for (const marker of res.data) {
+        if (marker.username == localStorage.getItem("username")) {
+          continue;
+        }
         new L.Marker(
           {
             lat: marker.lat,
@@ -233,7 +494,7 @@ export default Vue.extend({
           {
             icon: new L.Icon({
               iconUrl: require("../assets/sharedMarkerIcon.png"),
-              iconSize: [30, 30],
+              iconSize: [50, 50],
             }),
           }
         )
@@ -241,6 +502,12 @@ export default Vue.extend({
           .on("click", () => {
             alert(marker.username + "'s marker");
           });
+        this.sharedMarkersList.push({
+          id: marker.id,
+          title: marker.name,
+          lat: marker.lat,
+          lng: marker.lng,
+        });
       }
     },
     initLayerControl() {
@@ -267,9 +534,10 @@ export default Vue.extend({
     },
     async saveMarkerClickHandler() {
       this.addMarkerDialog = false;
+      const uid = this.getUID();
       const resp = await this.requests.addMarker({
         username: localStorage.getItem("username") as string,
-        id: this.getUID(),
+        id: uid,
         name: this.name,
         description: this.description,
         lat: this.currentLat,
@@ -281,52 +549,95 @@ export default Vue.extend({
         this.alertUser("Error adding marker", "error");
         return;
       }
-      new L.Marker({
-        lat: this.currentLat,
-        lng: this.currentLng,
-      })
+      const newMarker = new L.Marker(
+        {
+          lat: this.currentLat,
+          lng: this.currentLng,
+        },
+        {
+          icon: new L.Icon({
+            iconUrl: require("../assets/markerIcon.png"),
+            iconSize: [55, 50],
+          }),
+        }
+      )
         .addTo(this.myMarkers)
         .on("click", () => {
           alert("your marker");
         });
+      this.myMarkersList.push({
+        id: uid,
+        title: this.name,
+        lat: this.currentLat,
+        lng: this.currentLng,
+      });
+      // Reset variables
+      this.name = "";
+      this.description = "";
+      this.currentLat = 0;
+      this.currentLng = 0;
+      this.type = "";
+      this.radioButtonValue = "no";
     },
     getUID() {
       return new Date().valueOf().toString();
     },
     refreshLocation() {
-      if (navigator.geolocation) {
+      if (navigator.geolocation && !this.zooming) {
         navigator.geolocation.getCurrentPosition((position) => {
           this.currentLat = position.coords.latitude;
           this.currentLng = position.coords.longitude;
           this.me.setLatLng(
-            new LatLng(position.coords.latitude, position.coords.longitude)
+            new L.LatLng(position.coords.latitude, position.coords.longitude)
           );
         });
       }
     },
     loggedIn(): boolean {
-      if (localStorage.getItem("jwt")) {
-        return true;
+      if (localStorage.getItem("jwt") == undefined) {
+        return false;
       }
-      return false;
+      return true;
     },
     async loginCallback() {
-      this.loginDialog = false;
       const res = await this.requests.login({
         username: this.username,
         password: this.password,
       });
       if (res.status == RequestStatus.ERROR) {
         this.alertUser("Login failed", "error");
+        this.loginError = "Could not login";
       } else {
         localStorage.setItem("jwt", res.data.token);
         localStorage.setItem("username", this.username);
+        this.loginDialog = false;
+        this.logged = true;
+        window.location.reload();
         this.alertUser("Login successful", "success");
       }
+      this.username = "";
+      this.password = "";
+    },
+    async signUpCallback() {
+      const res = await this.requests.register({
+        name: this.sUsername,
+        password: this.sPass,
+      });
+      if (res.status == RequestStatus.ERROR) {
+        this.alertUser("Sign-up failed", "error");
+      } else {
+        this.signUpDialog = false;
+        this.loginDialog = true;
+        this.alertUser("Login successful", "success");
+      }
+      this.sUsername = "";
+      this.sPass = "";
+      this.sConfirmPass = "";
     },
     logoutCallback() {
       localStorage.removeItem("jwt");
       localStorage.removeItem("username");
+      window.location.reload();
     },
     alertUser(text: string, type: string) {
       this.alertText = text;
@@ -336,13 +647,38 @@ export default Vue.extend({
     goToLocation() {
       this.map.setView(this.me.getLatLng(), this.map.getMaxZoom());
     },
+    passMatch() {
+      if (this.sPass == this.sConfirmPass) {
+        return true;
+      } else {
+        return "Passwords don't match!";
+      }
+    },
+    passLength() {
+      if (this.sPass.length >= 8) {
+        return true;
+      } else {
+        return "Password must at least have 8 characters";
+      }
+    },
+    passContainsNum() {
+      if (/\d/.test(this.sPass)) {
+        return true;
+      } else {
+        return "Password must include a number";
+      }
+    },
+    goToMarker(item: { title: string; lat: number; lng: number }) {
+      this.showList = false;
+      this.map.setView(new L.LatLng(item.lat, item.lng), this.map.getMaxZoom());
+    },
   },
 });
 </script>
 <style scoped>
 @import url("https://unpkg.com/leaflet@1.7.1/dist/leaflet.css");
 #leafletMap {
-  height: 89vh;
+  height: 100vh;
   z-index: 0;
 }
 </style>

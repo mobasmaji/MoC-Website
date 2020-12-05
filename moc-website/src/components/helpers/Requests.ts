@@ -25,7 +25,7 @@ export interface MyResponse {
   data: any;
 }
 export interface RegisterArgs {
-  username: string;
+  name: string;
   password: string;
 }
 export interface LoginArgs {
@@ -62,7 +62,7 @@ export class Requests {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
       .catch(error => {
-        return { status: RequestStatus.ERROR, data: {} };
+        return { status: RequestStatus.ERROR, data: error };
       });
   }
 
@@ -72,10 +72,10 @@ export class Requests {
   public async getMarkers(username: string): Promise<MyResponse> {
     return postData("https://" + this.ip + "/marker/getAll", "GET", { username: username })
       .then(response => {
-        return { status: RequestStatus.SUCCESS, data: response.data };
+        return { status: RequestStatus.SUCCESS, data: response.data as MarkerArgs };
       })
       .catch(error => {
-        return { status: RequestStatus.ERROR, data: {} };
+        return { status: RequestStatus.ERROR, data: error };
       });
   }
   /**
@@ -87,7 +87,7 @@ export class Requests {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
       .catch(error => {
-        return { status: RequestStatus.ERROR, data: {} };
+        return { status: RequestStatus.ERROR, data: error };
       });
   }
   /**
@@ -106,27 +106,15 @@ export class Requests {
       });
   }
   /**
-   * Logs the user out
+   * Registers a new user
    */
-  public async logout(): Promise<any> {
-    return postData("https://" + this.ip + "/user/logout", "POST")
+  public async register(args: RegisterArgs): Promise<any> {
+    return postData("https://" + this.ip + "/user/register", "POST", args)
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response };
       })
       .catch(error => {
-        return { status: RequestStatus.ERROR, data: {} };
-      });
-  }
-  /**
-   * Registers a new user
-   */
-  public async register(args: RegisterArgs): Promise<any> {
-    return postData("https://" + this.ip + "/map_config/get_stations", "POST", args)
-      .then(response => {
-        return { status: RequestStatus.SUCCESS, data: response.data };
-      })
-      .catch(error => {
-        return { status: RequestStatus.ERROR, data: {} };
+        return { status: RequestStatus.ERROR, data: error };
       });
   }
   /**
