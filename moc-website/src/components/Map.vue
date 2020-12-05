@@ -314,7 +314,6 @@
     </v-btn>
 
     <!-- Popup when clicked on me -->
-
     <!-- Popup when clicked on my marker -->
 
     <!-- Popup when clicked on shared marker -->
