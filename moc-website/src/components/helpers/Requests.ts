@@ -81,8 +81,8 @@ export class Requests {
   /**
    * Gets the shared markers
    */
-  public async getSharedMarkers(username: string): Promise<MyResponse> {
-    return postData("https://" + this.ip + "/marker/getShared", "GET", { username: username })
+  public async getSharedMarkers(): Promise<MyResponse> {
+    return postData("https://" + this.ip + "/marker/getShared", "GET")
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -112,6 +112,18 @@ export class Requests {
     return postData("https://" + this.ip + "/user/register", "POST", args)
       .then(response => {
         return { status: RequestStatus.SUCCESS, data: response };
+      })
+      .catch(error => {
+        return { status: RequestStatus.ERROR, data: error };
+      });
+  }
+  /**
+   * Deletes a marker
+   */
+  public async deleteMarker(id: string): Promise<MyResponse> {
+    return postData("https://" + this.ip + "/marker/delete", "GET", { id: id })
+      .then(response => {
+        return { status: RequestStatus.SUCCESS, data: response.data as MarkerArgs };
       })
       .catch(error => {
         return { status: RequestStatus.ERROR, data: error };
