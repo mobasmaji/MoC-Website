@@ -8,7 +8,7 @@
     <!-- Floating toolbar -->
     <v-container class="d-flex justify-center">
       <v-toolbar absolute rounded="pill" dense class="ma-4">
-        <v-app-bar-nav-icon @click="showList = true"></v-app-bar-nav-icon>
+        <v-app-bar-nav-icon @click="showList = !showList"></v-app-bar-nav-icon>
         <v-divider inset></v-divider>
         <v-btn fab dark small color="red" v-if="logged" @click="logoutCallback">
           <v-icon>mdi-account-off</v-icon>
@@ -324,6 +324,7 @@
 <script lang="ts">
 import Vue from "vue";
 import L from "leaflet";
+import { CustomMarker, CustomMarkerOptions } from "./helpers/CustomMarker";
 import { Requests, RequestStatus } from "./helpers/Requests";
 export default Vue.extend({
   name: "Map",
@@ -333,7 +334,7 @@ export default Vue.extend({
     tileLayer: {} as L.TileLayer,
     myMarkers: {} as L.FeatureGroup,
     sharedMarkers: {} as L.FeatureGroup,
-    me: {} as L.Marker,
+    me: {} as CustomMarker,
     addMarkerDialog: false,
     loginDialog: false,
     signUpDialog: false,
@@ -418,7 +419,7 @@ export default Vue.extend({
     initLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((position) => {
-          this.me = new L.Marker(
+          this.me = new CustomMarker(
             {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
@@ -454,7 +455,7 @@ export default Vue.extend({
         alert("error");
       }
       for (const marker of res.data) {
-        new L.Marker(
+        new CustomMarker(
           {
             lat: marker.lat,
             lng: marker.lng,
@@ -486,7 +487,7 @@ export default Vue.extend({
         if (marker.username == localStorage.getItem("username")) {
           continue;
         }
-        new L.Marker(
+        new CustomMarker(
           {
             lat: marker.lat,
             lng: marker.lng,
@@ -549,7 +550,7 @@ export default Vue.extend({
         this.alertUser("Error adding marker", "error");
         return;
       }
-      const newMarker = new L.Marker(
+       new CustomMarker(
         {
           lat: this.currentLat,
           lng: this.currentLng,
