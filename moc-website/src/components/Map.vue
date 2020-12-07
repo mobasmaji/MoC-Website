@@ -646,7 +646,6 @@ export default Vue.extend({
           customId: uid,
           type: this.type,
           description: this.description,
-          shared: this.radioButtonValue == "yes" ? true : false,
           title: this.name,
           icon: new L.Icon({
             iconUrl: require("../assets/markerIcon.png"),

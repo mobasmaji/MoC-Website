@@ -7,7 +7,10 @@ export interface CustomMarkerOptions extends L.MarkerOptions {
     owner?: string;
 }
 export class CustomMarker extends L.Marker {
-    constructor(latlng: L.LatLngExpression, options?: CustomMarkerOptions) {
+    options: CustomMarkerOptions;
+    constructor(latlng: L.LatLngExpression, options: CustomMarkerOptions) {
         super(latlng, options);
+        this.options = options;
     }
+
 }
