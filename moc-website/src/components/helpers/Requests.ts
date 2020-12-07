@@ -118,6 +118,18 @@ export class Requests {
       });
   }
   /**
+   * Deletes a marker
+   */
+  public async deleteMarker(id: string): Promise<MyResponse> {
+    return postData("https://" + this.ip + "/marker/delete", "GET", { id: id })
+      .then(response => {
+        return { status: RequestStatus.SUCCESS, data: response.data as MarkerArgs };
+      })
+      .catch(error => {
+        return { status: RequestStatus.ERROR, data: error };
+      });
+  }
+  /**
    * Sets the IP address and port to use in requests
    * @param ip new IP address
    * @param port new port

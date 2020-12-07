@@ -7,39 +7,33 @@
     <div id="leafletMap"></div>
     <!-- Floating toolbar -->
     <v-container class="d-flex justify-center">
-      <v-toolbar absolute rounded="pill" dense class="ma-4">
-        <v-app-bar-nav-icon @click="showList = true"></v-app-bar-nav-icon>
+      <v-toolbar absolute rounded="pill" dense class="ma-4" min-width="">
+        <v-app-bar-nav-icon @click="showList = !showList"></v-app-bar-nav-icon>
         <v-divider></v-divider>
-        <v-btn fab dark small color="red" v-if="logged" @click="logoutCallback">
-          <v-icon>mdi-account-off</v-icon>
-          <v-tooltip>Logout</v-tooltip>
+        <v-btn color="red darken-1" v-if="logged" @click="logoutCallback" text>
+          Logout
         </v-btn>
         <v-divider v-if="logged"></v-divider>
 
         <v-btn
-          fab
-          dark
-          small
-          color="green"
+          color="green darken-1"
           v-if="!logged"
           @click="signUpDialog = true"
+          text
         >
-          <v-icon>mdi-account-plus</v-icon>
-          <v-tooltip>Sign-up</v-tooltip>
+          Sign-up
         </v-btn>
         <v-divider v-if="!logged"></v-divider>
 
         <v-btn
-          fab
-          dark
-          small
-          color="indigo"
+          color="blue darken-1"
           v-if="!logged"
           @click="loginDialog = true"
+          text
         >
-          <v-icon>mdi-account-key</v-icon>
-          <v-tooltip>Login</v-tooltip>
+          Login
         </v-btn>
+        <v-divider v-if="!logged"></v-divider>
         <v-divider v-if="!logged"></v-divider>
         <v-btn icon to="/About">
           <v-icon>mdi-information</v-icon>
@@ -55,7 +49,7 @@
               Available Markers
             </v-list-item-title>
             <v-list-item-subtitle>
-              Here you click markers!
+              You can also click them!
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -71,10 +65,7 @@
             <v-list-item-content>
               <v-list-item-title v-text="item.title"></v-list-item-title>
 
-              <v-list-item-subtitle
-                v-text="item.lat + ','"
-              ></v-list-item-subtitle>
-              <v-list-item-subtitle v-text="item.lat"></v-list-item-subtitle>
+              <v-list-item-subtitle>Type: {{ item.type }}</v-list-item-subtitle>
             </v-list-item-content>
 
             <v-list-item-action>
@@ -84,7 +75,7 @@
             </v-list-item-action>
           </v-list-item>
         </template>
-        <v-list-item-subtitle v-else class="pa-2">
+        <v-list-item-subtitle v-else class="ml-6">
           You don't have markers yet</v-list-item-subtitle
         >
 
@@ -99,10 +90,8 @@
             <v-list-item-content>
               <v-list-item-title v-text="item.title"></v-list-item-title>
 
-              <v-list-item-subtitle
-                v-text="item.lat + ','"
-              ></v-list-item-subtitle>
-              <v-list-item-subtitle v-text="item.lng"></v-list-item-subtitle>
+              <v-list-item-subtitle>Type: {{ item.type }}</v-list-item-subtitle>
+              <v-list-item-subtitle> By: {{ item.owner }}</v-list-item-subtitle>
             </v-list-item-content>
 
             <v-list-item-action>
@@ -217,7 +206,7 @@
             Close
           </v-btn>
           <v-btn color="blue darken-1" text @click="loginCallback">
-            Login
+            Confirm
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -283,41 +272,68 @@
     <v-alert v-model="alertToggle" :type="alertType" dismissible>
       {{ alertText }}
     </v-alert>
-    <!-- position buttons -->
+    <!-- position button -->
+    <v-btn fixed fab small bottom left @click="goToLocation" class="ml-12 mb-2">
+      <v-icon dark> mdi-crosshairs-gps </v-icon>
+    </v-btn>
+    <!-- zoom buttons -->
     <v-btn
       fixed
       fab
-      dark
-      large
+      small
       bottom
       left
-      color="indigo"
-      @click="goToLocation"
-      class="ma-2"
+      @click="map.zoomOut()"
+      dense
+      class="mb-2"
     >
-      <v-icon dark> mdi-crosshairs-gps </v-icon>
+      <v-icon dark> mdi-minus </v-icon>
+    </v-btn>
+    <v-btn
+      fixed
+      fab
+      small
+      bottom
+      left
+      @click="map.zoomIn()"
+      dense
+      class="mb-14"
+    >
+      <v-icon dark> mdi-plus </v-icon>
     </v-btn>
     <!-- button to add markers -->
     <v-btn
       fixed
-      fab
+      small
       dark
-      large
       bottom
       right
       color="indigo"
       @click="addButtonClickHandler"
       dense
-      class="ma-2"
+      class="mb-13"
     >
-      <v-icon dark> mdi-plus </v-icon>
+      Add marker
+    </v-btn>
+    <!-- button to toggle shared markers -->
+    <v-btn
+      fixed
+      small
+      dark
+      bottom
+      right
+      color="orange darken-3"
+      @click="toggleSharedMarkers()"
+      dense
+      class="mb-4"
+    >
+      Toggle shared markers
     </v-btn>
 
     <!-- Popup when clicked on me -->
     <!-- Popup when clicked on markers -->
     <v-dialog max-width="290" v-model="showMarkerDialog">
       <v-list>
-        <v-divider></v-divider>
         <v-list-item>
           <v-list-item-content>
             <v-list-item-title>
@@ -335,19 +351,23 @@
         </v-list-item>
         <v-divider></v-divider>
         <v-subheader>Coordinates</v-subheader>
-        <v-list-item> Latitude: {{ clickedMarker.lat }} </v-list-item>
-        <v-list-item> Longitude: {{ clickedMarker.lng }} </v-list-item>
+        <v-list-item dense> Latitude: {{ clickedMarker.lat }} </v-list-item>
+        <v-list-item dense> Longitude: {{ clickedMarker.lng }} </v-list-item>
         <v-divider></v-divider>
         <v-subheader>Type</v-subheader>
-        <v-list-item>
+        <v-list-item dense>
           {{ clickedMarker.type }}
         </v-list-item>
         <v-divider></v-divider>
-
-        <v-subheader>Image</v-subheader>
-        <v-list-item> No Image </v-list-item>
-        <v-divider></v-divider>
-        <v-btn @click="showMarkerDialog  = false" color="blue darken-1" text> Ok </v-btn>
+        <v-btn @click="showMarkerDialog = false" color="blue darken-1" text>
+          Ok
+        </v-btn>
+        <v-btn @click="showMarkerDialog = false" color="blue darken-1" text>
+          Update
+        </v-btn>
+        <v-btn @click="deleteClickedMarker" color="red darken-1" text>
+          Delete
+        </v-btn>
       </v-list>
     </v-dialog>
   </div>
@@ -365,6 +385,7 @@ export default Vue.extend({
     tileLayer: {} as L.TileLayer,
     myMarkers: {} as L.FeatureGroup,
     sharedMarkers: {} as L.FeatureGroup,
+    sharedMarkersActive: true,
     me: {} as L.Marker,
     addMarkerDialog: false,
     loginDialog: false,
@@ -396,12 +417,15 @@ export default Vue.extend({
     // Fab
     accountFab: false,
     myMarkersList: [] as {
+      type: string;
       id: string;
       title: string;
       lat: number;
       lng: number;
     }[],
     sharedMarkersList: [] as {
+      type: string;
+      owner: string;
       id: string;
       title: string;
       lat: number;
@@ -413,6 +437,7 @@ export default Vue.extend({
     // marker args to show in dialog
     showMarkerDialog: false,
     clickedMarker: {
+      id: "",
       title: "",
       description: "",
       owner: "",
@@ -431,7 +456,6 @@ export default Vue.extend({
     this.initLocation();
     this.initMarkers();
     this.initSharedMarkers();
-    this.initLayerControl();
   },
   watch: {
     password: function () {
@@ -443,6 +467,8 @@ export default Vue.extend({
       this.map = L.map("leafletMap", {
         center: new L.LatLng(40.731253, -73.996139),
         zoom: 12,
+        zoomControl: false,
+        attributionControl: false,
       });
       this.tileLayer = L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
         attribution:
@@ -503,6 +529,10 @@ export default Vue.extend({
             lng: marker.lng,
           },
           {
+            customId: marker.id,
+            type: marker.type,
+            description: marker.description,
+            title: marker.name,
             icon: new L.Icon({
               iconUrl: require("../assets/markerIcon.png"),
               iconSize: [50, 50],
@@ -512,6 +542,7 @@ export default Vue.extend({
           .addTo(this.myMarkers)
           .on("click", () => {
             this.clickedMarker = {
+              id: marker.id,
               title: marker.name,
               type: marker.type,
               description: marker.description,
@@ -522,6 +553,7 @@ export default Vue.extend({
             this.showMarkerDialog = true;
           });
         this.myMarkersList.push({
+          type: marker.type,
           id: marker.id,
           title: marker.name,
           lat: marker.lat,
@@ -543,6 +575,10 @@ export default Vue.extend({
             lng: marker.lng,
           },
           {
+            customId: marker.id,
+            type: marker.type,
+            description: marker.description,
+            title: marker.name,
             icon: new L.Icon({
               iconUrl: require("../assets/sharedMarkerIcon.png"),
               iconSize: [50, 50],
@@ -550,8 +586,9 @@ export default Vue.extend({
           }
         )
           .addTo(this.sharedMarkers)
-          .on("click", (e) => {
+          .on("click", () => {
             this.clickedMarker = {
+              id: marker.id,
               title: marker.name,
               type: marker.type,
               description: marker.description,
@@ -562,26 +599,14 @@ export default Vue.extend({
             this.showMarkerDialog = true;
           });
         this.sharedMarkersList.push({
+          type: marker.type,
+          owner: marker.username,
           id: marker.id,
           title: marker.name,
           lat: marker.lat,
           lng: marker.lng,
         });
       }
-    },
-    initLayerControl() {
-      const base: L.Control.LayersObject = {
-        Base: this.tileLayer,
-      };
-      // Layers to show/hide
-      const overlayLayers: L.Control.LayersObject = {
-        "My Markers": this.myMarkers,
-        "Shared Markers": this.sharedMarkers,
-      };
-      // Create Layer Control with the previous options
-      const layerControl = new L.Control.Layers(base, overlayLayers);
-      // Add to map
-      layerControl.addTo(this.map);
     },
 
     addButtonClickHandler() {
@@ -608,12 +633,17 @@ export default Vue.extend({
         this.alertUser("Error adding marker", "error");
         return;
       }
-      const newMarker = new L.Marker(
+      new L.Marker(
         {
           lat: this.currentLat,
           lng: this.currentLng,
         },
         {
+          customId: uid,
+          type: this.type,
+          description: this.description,
+          shared: this.radioButtonValue == "yes" ? true : false,
+          title: this.name,
           icon: new L.Icon({
             iconUrl: require("../assets/markerIcon.png"),
             iconSize: [55, 50],
@@ -622,9 +652,19 @@ export default Vue.extend({
       )
         .addTo(this.myMarkers)
         .on("click", () => {
-          alert("your marker");
+          this.clickedMarker = {
+            id: uid,
+            title: this.name,
+            type: this.type,
+            description: this.description,
+            owner: localStorage.getItem("username") as string,
+            lat: this.currentLat,
+            lng: this.currentLng,
+          };
+          this.showMarkerDialog = true;
         });
       this.myMarkersList.push({
+        type: this.type,
         id: uid,
         title: this.name,
         lat: this.currentLat,
@@ -637,6 +677,28 @@ export default Vue.extend({
       this.currentLng = 0;
       this.type = "";
       this.radioButtonValue = "no";
+    },
+    async deleteClickedMarker() {
+      const resp = await this.requests.deleteMarker(this.clickedMarker.id);
+      if (resp.status == RequestStatus.ERROR) {
+        this.alertUser("Error deleting marker", "error");
+        return;
+      }
+      for (const marker of this.myMarkers.getLayers() as L.Marker[]) {
+        if (this.clickedMarker.id == marker.options.customId) {
+          this.myMarkers.removeLayer(marker);
+        }
+      }
+      for (const marker of this.myMarkersList) {
+        if (this.clickedMarker.id == marker.id) {
+          const index = this.myMarkersList.indexOf(marker);
+          if (index > -1) {
+            this.myMarkersList.splice(index, 1);
+          }
+        }
+      }
+      this.alertUser("deleted marker", "success");
+      this.showMarkerDialog = false;
     },
     getUID() {
       return new Date().valueOf().toString();
@@ -730,6 +792,15 @@ export default Vue.extend({
     goToMarker(item: { title: string; lat: number; lng: number }) {
       this.showList = false;
       this.map.setView(new L.LatLng(item.lat, item.lng), this.map.getMaxZoom());
+    },
+    toggleSharedMarkers() {
+      if (this.sharedMarkersActive) {
+        this.map.removeLayer(this.sharedMarkers);
+        this.sharedMarkersActive = false;
+      } else {
+        this.map.addLayer(this.sharedMarkers);
+        this.sharedMarkersActive = true;
+      }
     },
   },
 });
