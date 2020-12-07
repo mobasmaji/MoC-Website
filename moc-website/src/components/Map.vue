@@ -688,7 +688,7 @@ export default Vue.extend({
         this.alertUser("Error deleting marker", "error");
         return;
       }
-      for (const marker of this.myMarkers.getLayers() as L.Marker[]) {
+      for (const marker of this.myMarkers.getLayers() as CustomMarker[]) {
         if (this.clickedMarker.id == marker.options.customId) {
           this.myMarkers.removeLayer(marker);
         }
