@@ -474,7 +474,7 @@ export default Vue.extend({
         zoomControl: false,
         attributionControl: false,
       });
-      this.tileLayer = L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+      this.tileLayer = L.tileLayer("https://{s}.tile.osm.org/{z}/{x}/{y}.png", {
         attribution:
           '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
         zIndex: 1,
