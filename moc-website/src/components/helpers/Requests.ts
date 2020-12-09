@@ -59,6 +59,9 @@ export class Requests {
   public async addMarker(args: MarkerArgs): Promise<MyResponse> {
     return postData("https://" + this.ip + "/marker/add", "GET", args)
       .then(response => {
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: {} };
+        }
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
       .catch(error => {

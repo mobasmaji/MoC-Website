@@ -2,10 +2,10 @@
   <v-container fluid class="ma-4">
     <v-layout row wrap>
       <v-flex xs12 class="text-md-center" mt-5>
-        <h1>
+        <h2>
           Welcome to <br />
           MarkerShare
-        </h1>
+        </h2>
       </v-flex>
       <v-flex xs12 sm6 offset-sm3 mt-8>
         <blockquote class="text-md-center">

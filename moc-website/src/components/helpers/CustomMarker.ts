@@ -1,16 +1,17 @@
-import L from "leaflet";
 
-export interface CustomMarkerOptions extends L.MarkerOptions {
+import L, { MarkerOptions, Marker } from "leaflet";
+
+export interface CustomMarkerOptions extends MarkerOptions {
     customId?: string;
     type?: string;
     description?: string;
     owner?: string;
 }
-export class CustomMarker extends L.Marker {
-    options: CustomMarkerOptions;
-    constructor(latlng: L.LatLngExpression, options: CustomMarkerOptions) {
+export class CustomMarker extends Marker {
+    constructor(latlng: L.LatLngExpression, options?: CustomMarkerOptions) {
         super(latlng, options);
-        this.options = options;
     }
-
+    getCustomId() {
+        return (this.options as CustomMarkerOptions).customId;
+    }
 }

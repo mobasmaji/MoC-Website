@@ -101,7 +101,7 @@
             </v-list-item-action>
           </v-list-item>
         </template>
-        <v-list-item-subtitle v-else class="pa-2"
+        <v-list-item-subtitle v-else class="ml-6"
           >There are no shared markers</v-list-item-subtitle
         >
       </v-list>
@@ -128,7 +128,7 @@
                 ></v-textarea>
                 <v-select
                   v-model="type"
-                  :items="['Nature', 'Building', 'Status', 'I just Like it!']"
+                  :items="['Nature', 'Building', 'Statue','Restaurant','I just like it!','Other']"
                   label="Type"
                   required
                 ></v-select>
@@ -337,7 +337,7 @@
         <v-list-item>
           <v-list-item-content>
             <v-list-item-title>
-              <h1>{{ clickedMarker.title }}</h1>
+              <h3>{{ clickedMarker.title }}</h3>
             </v-list-item-title>
             <v-list-item-subtitle>
               Owned by: {{ clickedMarker.owner }}
@@ -376,7 +376,7 @@
 <script lang="ts">
 import Vue from "vue";
 import L from "leaflet";
-import { CustomMarker } from "./helpers/CustomMarker";
+import { CustomMarker } from "./helpers/CustomMarker"
 import { Requests, RequestStatus } from "./helpers/Requests";
 export default Vue.extend({
   name: "Map",
@@ -387,7 +387,7 @@ export default Vue.extend({
     myMarkers: {} as L.FeatureGroup,
     sharedMarkers: {} as L.FeatureGroup,
     sharedMarkersActive: true,
-    me: {} as CustomMarker,
+    me: {} as L.Marker,
     addMarkerDialog: false,
     loginDialog: false,
     signUpDialog: false,
@@ -490,7 +490,7 @@ export default Vue.extend({
     initLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((position) => {
-          this.me = new CustomMarker(
+          this.me = new L.Marker(
             {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
@@ -527,7 +527,7 @@ export default Vue.extend({
         alert("error");
       }
       for (const marker of res.data) {
-        new CustomMarker(
+        new  CustomMarker(
           {
             lat: marker.lat,
             lng: marker.lng,
@@ -688,7 +688,7 @@ export default Vue.extend({
         return;
       }
       for (const marker of this.myMarkers.getLayers() as CustomMarker[]) {
-        if (this.clickedMarker.id == marker.options.customId) {
+        if (this.clickedMarker.id == marker.getCustomId()) {
           this.myMarkers.removeLayer(marker);
         }
       }
