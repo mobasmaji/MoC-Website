@@ -57,10 +57,26 @@ export class Requests {
    * @param args 
    */
   public async addMarker(args: MarkerArgs): Promise<MyResponse> {
-    return postData("https://" + this.ip + "/marker/add", "GET", args)
+    return postData("https://" + this.ip + "/marker/add", "POST", args)
       .then(response => {
         if (response.err) {
-          return { status: RequestStatus.ERROR, data: {} };
+          return { status: RequestStatus.ERROR, data: response.err} ;
+        }
+        return { status: RequestStatus.SUCCESS, data: response.data };
+      })
+      .catch(error => {
+        return { status: RequestStatus.ERROR, data: error };
+      });
+  }
+  /**
+   * Updates a marker
+   * @param args 
+   */
+  public async updateMarker(args: MarkerArgs): Promise<MyResponse> {
+    return postData("https://" + this.ip + "/marker/update", "POST", args)
+      .then(response => {
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: response.err} ;
         }
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
@@ -73,8 +89,11 @@ export class Requests {
    * Gets the markers
    */
   public async getMarkers(username: string): Promise<MyResponse> {
-    return postData("https://" + this.ip + "/marker/getAll", "GET", { username: username })
+    return postData("https://" + this.ip + "/marker/getAll", "POST", { username: username })
       .then(response => {
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: response.err} ;
+        }
         return { status: RequestStatus.SUCCESS, data: response.data as MarkerArgs };
       })
       .catch(error => {
@@ -85,8 +104,11 @@ export class Requests {
    * Gets the shared markers
    */
   public async getSharedMarkers(): Promise<MyResponse> {
-    return postData("https://" + this.ip + "/marker/getShared", "GET")
+    return postData("https://" + this.ip + "/marker/getShared", "POST")
       .then(response => {
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: response.err} ;
+        }
         return { status: RequestStatus.SUCCESS, data: response.data };
       })
       .catch(error => {
@@ -100,7 +122,7 @@ export class Requests {
     return postData("https://" + this.ip + "/user/login", "POST", args)
       .then(response => {
         if (response.err) {
-          return { status: RequestStatus.ERROR, data: {} };
+          return { status: RequestStatus.ERROR, data: response.err} ;
         }
         return { status: RequestStatus.SUCCESS, data: response };
       })
@@ -114,6 +136,9 @@ export class Requests {
   public async register(args: RegisterArgs): Promise<any> {
     return postData("https://" + this.ip + "/user/register", "POST", args)
       .then(response => {
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: response.err} ;
+        }
         return { status: RequestStatus.SUCCESS, data: response };
       })
       .catch(error => {
@@ -124,8 +149,11 @@ export class Requests {
    * Deletes a marker
    */
   public async deleteMarker(id: string): Promise<MyResponse> {
-    return postData("https://" + this.ip + "/marker/delete", "GET", { id: id })
+    return postData("https://" + this.ip + "/marker/delete", "POST", { id: id })
       .then(response => {
+        if (response.err) {
+          return { status: RequestStatus.ERROR, data: response.err} ;
+        }
         return { status: RequestStatus.SUCCESS, data: response.data as MarkerArgs };
       })
       .catch(error => {

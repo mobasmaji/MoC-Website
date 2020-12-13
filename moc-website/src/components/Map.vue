@@ -106,8 +106,59 @@
         >
       </v-list>
     </v-navigation-drawer>
-    <!-- Add marker dialog -->
+    <!-- Update marker dialog -->
 
+    <v-dialog v-model="updateMarkerDialog" max-width="290">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Update</span>
+        </v-card-title>
+        <v-card-text>
+          <v-container>
+            <v-row>
+              <v-col>
+                <v-text-field
+                  v-model="name"
+                  label="Marker's name"
+                  required
+                ></v-text-field>
+                <v-textarea
+                  v-model="description"
+                  label="Description"
+                ></v-textarea>
+                <v-select
+                  v-model="type"
+                  :items="[
+                    'Nature',
+                    'Building',
+                    'Statue',
+                    'Restaurant',
+                    'I just like it!',
+                    'Other',
+                  ]"
+                  label="Type"
+                  required
+                ></v-select>
+                <v-radio-group v-model="radioButtonValue" column>
+                  <v-radio label="Share with everyone" value="yes"></v-radio>
+                  <v-radio label="Keep it private" value="no"></v-radio>
+                </v-radio-group>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="updateMarkerDialog = false">
+            Close
+          </v-btn>
+          <v-btn color="blue darken-1" text @click="updateMarkerClickHandler">
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <!-- Add a marker -->
     <v-dialog v-model="addMarkerDialog" max-width="290">
       <v-card>
         <v-card-title>
@@ -128,7 +179,14 @@
                 ></v-textarea>
                 <v-select
                   v-model="type"
-                  :items="['Nature', 'Building', 'Statue','Restaurant','I just like it!','Other']"
+                  :items="[
+                    'Nature',
+                    'Building',
+                    'Statue',
+                    'Restaurant',
+                    'I just like it!',
+                    'Other',
+                  ]"
                   label="Type"
                   required
                 ></v-select>
@@ -269,9 +327,9 @@
       </v-card>
     </v-dialog>
     <!-- Alert control -->
-    <v-alert v-model="alertToggle" :type="alertType" dismissible>
+    <v-snackbar v-model="alertToggle" timeout="2000">
       {{ alertText }}
-    </v-alert>
+    </v-snackbar>
     <!-- position button -->
     <v-btn fixed fab small bottom left @click="goToLocation" class="ml-12 mb-2">
       <v-icon dark> mdi-crosshairs-gps </v-icon>
@@ -353,6 +411,9 @@
         <v-subheader>Coordinates</v-subheader>
         <v-list-item dense> Latitude: {{ clickedMarker.lat }} </v-list-item>
         <v-list-item dense> Longitude: {{ clickedMarker.lng }} </v-list-item>
+        <v-btn @click="goToGoogle = false" color="blue darken-1" text
+          >See in Google Maps</v-btn
+        >
         <v-divider></v-divider>
         <v-subheader>Type</v-subheader>
         <v-list-item dense>
@@ -362,10 +423,20 @@
         <v-btn @click="showMarkerDialog = false" color="blue darken-1" text>
           Ok
         </v-btn>
-        <v-btn @click="showMarkerDialog = false" color="blue darken-1" text  v-if="clickedMarker.owner == username">
+        <v-btn
+          @click="showMarkerDialog = false"
+          color="blue darken-1"
+          text
+          v-if="clickedMarker.owner == username"
+        >
           Update
         </v-btn>
-        <v-btn @click="deleteClickedMarker" color="red darken-1" text v-if="clickedMarker.owner == username">
+        <v-btn
+          @click="deleteClickedMarker"
+          color="red darken-1"
+          text
+          v-if="clickedMarker.owner == username"
+        >
           Delete
         </v-btn>
       </v-list>
@@ -376,7 +447,7 @@
 <script lang="ts">
 import Vue from "vue";
 import L from "leaflet";
-import { CustomMarker } from "./helpers/CustomMarker"
+import { CustomMarker } from "./helpers/CustomMarker";
 import { Requests, RequestStatus } from "./helpers/Requests";
 export default Vue.extend({
   name: "Map",
@@ -389,6 +460,7 @@ export default Vue.extend({
     sharedMarkersActive: true,
     me: {} as L.Marker,
     addMarkerDialog: false,
+    updateMarkerDialog: false,
     loginDialog: false,
     signUpDialog: false,
     name: "",
@@ -451,7 +523,7 @@ export default Vue.extend({
     if (!localStorage.getItem("jwt")) {
       this.loginDialog = true;
     }
-    if(localStorage.getItem("username")) {
+    if (localStorage.getItem("username")) {
       this.username = localStorage.getItem("username") as string;
     }
     this.logged = this.loggedIn();
@@ -514,7 +586,7 @@ export default Vue.extend({
         });
         setInterval(() => this.refreshLocation(), 300);
       } else {
-        alert("no geoss location");
+        this.alertUser("No Geo Location", "error");
       }
     },
     async initMarkers() {
@@ -524,10 +596,10 @@ export default Vue.extend({
       const username = localStorage.getItem("username") as string;
       const res = await this.requests.getMarkers(username);
       if (res.status == RequestStatus.ERROR) {
-        alert("error");
+        this.alertUser("Error getting your markers", "error");
       }
       for (const marker of res.data) {
-        new  CustomMarker(
+        new CustomMarker(
           {
             lat: marker.lat,
             lng: marker.lng,
@@ -569,6 +641,9 @@ export default Vue.extend({
       this.sharedMarkers = new L.FeatureGroup();
       this.sharedMarkers.addTo(this.map);
       const res = await this.requests.getSharedMarkers();
+      if (res.status == RequestStatus.ERROR) {
+        this.alertUser("Error getting shared markers", "error");
+      }
       for (const marker of res.data) {
         if (marker.username == localStorage.getItem("username")) {
           continue;
@@ -612,10 +687,16 @@ export default Vue.extend({
         });
       }
     },
-
+    updateButtonClickHandler() {
+      this.showMarkerDialog = false;
+      this.updateMarkerDialog = true;
+      this.name = this.clickedMarker.title;
+      this.description = this.clickedMarker.description;
+      this.type = this.clickedMarker.type;
+    },
     addButtonClickHandler() {
       if (!this.loggedIn()) {
-        alert("You need to login first");
+        this.alertUser("You need to login first", "error");
       } else {
         this.addMarkerDialog = true;
       }
@@ -637,7 +718,7 @@ export default Vue.extend({
         this.alertUser("Error adding marker", "error");
         return;
       }
-       new CustomMarker(
+      new CustomMarker(
         {
           lat: this.currentLat,
           lng: this.currentLng,
@@ -680,6 +761,19 @@ export default Vue.extend({
       this.currentLng = 0;
       this.type = "";
       this.radioButtonValue = "no";
+    },
+    async updateMarkerClickHandler() {
+      this.updateMarkerDialog = false;
+      await this.requests.updateMarker({
+        username: localStorage.getItem("username") as string,
+        id: this.clickedMarker.id,
+        name: this.name,
+        description: this.description,
+        lat: this.currentLat,
+        lng: this.currentLng,
+        type: this.type,
+        share: this.radioButtonValue == "yes" ? true : false,
+      });
     },
     async deleteClickedMarker() {
       const resp = await this.requests.deleteMarker(this.clickedMarker.id);
@@ -804,6 +898,14 @@ export default Vue.extend({
         this.map.addLayer(this.sharedMarkers);
         this.sharedMarkersActive = true;
       }
+    },
+    goToGoogle() {
+      window.location.replace(
+        "http://maps.google.com/maps?q=" +
+          this.clickedMarker.lat +
+          "," +
+          this.clickedMarker.lng
+      );
     },
   },
 });
