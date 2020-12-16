@@ -72,7 +72,7 @@ export class Requests {
    * Updates a marker
    * @param args 
    */
-  public async updateMarker(args: MarkerArgs): Promise<MyResponse> {
+  public async updateMarker(args: any): Promise<MyResponse> {
     return postData("https://" + this.ip + "/marker/update", "POST", args)
       .then(response => {
         if (response.err) {
