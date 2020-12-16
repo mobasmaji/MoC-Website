@@ -767,7 +767,7 @@ export default Vue.extend({
       this.updateMarkerDialog = false;
       const res = await this.requests.updateMarker({
         id: this.clickedMarker.id,
-        username: localStorage.getItem("username"),
+        username: localStorage.getItem("username") as string,
         name: this.name,
         description: this.description,
         type: this.type,
