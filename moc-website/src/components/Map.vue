@@ -327,7 +327,7 @@
       </v-card>
     </v-dialog>
     <!-- Alert control -->
-    <v-snackbar v-model="alertToggle" timeout="2000">
+    <v-snackbar v-model="alertToggle" timeout="2000" :color="alertType">
       {{ alertText }}
     </v-snackbar>
     <!-- position button -->
@@ -411,7 +411,7 @@
         <v-subheader>Coordinates</v-subheader>
         <v-list-item dense> Latitude: {{ clickedMarker.lat }} </v-list-item>
         <v-list-item dense> Longitude: {{ clickedMarker.lng }} </v-list-item>
-        <v-btn @click="goToGoogle = false" color="blue darken-1" text
+        <v-btn @click="goToGoogle" color="blue darken-1" text
           >See in Google Maps</v-btn
         >
         <v-divider></v-divider>
@@ -424,7 +424,7 @@
           Ok
         </v-btn>
         <v-btn
-          @click="showMarkerDialog = false"
+          @click="updateButtonClickHandler"
           color="blue darken-1"
           text
           v-if="clickedMarker.owner == username"
@@ -446,8 +446,8 @@
 
 <script lang="ts">
 import Vue from "vue";
-import L from "leaflet";
-import { CustomMarker } from "./helpers/CustomMarker";
+import L, { LeafletMouseEvent } from "leaflet";
+import { CustomMarker, CustomMarkerOptions } from "./helpers/CustomMarker";
 import { Requests, RequestStatus } from "./helpers/Requests";
 export default Vue.extend({
   name: "Map",
@@ -718,6 +718,7 @@ export default Vue.extend({
         this.alertUser("Error adding marker", "error");
         return;
       }
+      this.alertUser("Successfully added marker", "success");
       new CustomMarker(
         {
           lat: this.currentLat,
@@ -735,15 +736,15 @@ export default Vue.extend({
         }
       )
         .addTo(this.myMarkers)
-        .on("click", () => {
+        .on("click", (event: LeafletMouseEvent) => {
           this.clickedMarker = {
             id: uid,
-            title: this.name,
-            type: this.type,
-            description: this.description,
+            title: event.target.options.title,
+            type: event.target.options.type,
+            description: event.target.options.description,
             owner: localStorage.getItem("username") as string,
-            lat: this.currentLat,
-            lng: this.currentLng,
+            lat: event.target.getLatLng().lat,
+            lng: event.target.getLatLng().lng,
           };
           this.showMarkerDialog = true;
         });
@@ -764,15 +765,32 @@ export default Vue.extend({
     },
     async updateMarkerClickHandler() {
       this.updateMarkerDialog = false;
-      await this.requests.updateMarker({
-        username: localStorage.getItem("username") as string,
+      const res = await this.requests.updateMarker({
         id: this.clickedMarker.id,
+        username: localStorage.getItem("username"),
         name: this.name,
         description: this.description,
-        lat: this.currentLat,
-        lng: this.currentLng,
         type: this.type,
         share: this.radioButtonValue == "yes" ? true : false,
+      });
+      if(res.status == RequestStatus.ERROR) {
+        this.alertUser("Could not update", "error");
+        return;
+      }
+      this.alertUser("Successfuly updated marker", "success");
+      const id = this.clickedMarker.id;
+      (this.myMarkers.getLayers()as CustomMarker[]).find((value)=> {
+        if(value.getCustomId() == id) {
+          (value.options as CustomMarkerOptions).title = this.name;
+          (value.options as CustomMarkerOptions).description = this.description;
+          (value.options as CustomMarkerOptions).type = this.type;
+        }
+      });
+      this.myMarkersList.find(
+        (value) =>{ if(value.id == this.clickedMarker.id) {
+          value.title = this.name;
+          value.type = this.type;
+        } 
       });
     },
     async deleteClickedMarker() {
@@ -794,14 +812,14 @@ export default Vue.extend({
           }
         }
       }
-      this.alertUser("deleted marker", "success");
+      this.alertUser("Successfully deleted marker", "success");
       this.showMarkerDialog = false;
     },
     getUID() {
       return new Date().valueOf().toString();
     },
     refreshLocation() {
-      if (navigator.geolocation && !this.zooming) {
+      if (navigator.geolocation && !this.zooming && this.me.getLatLng()) {
         navigator.geolocation.getCurrentPosition((position) => {
           this.currentLat = position.coords.latitude;
           this.currentLng = position.coords.longitude;
@@ -829,9 +847,9 @@ export default Vue.extend({
         localStorage.setItem("jwt", res.data.token);
         localStorage.setItem("username", this.username);
         this.loginDialog = false;
-        this.logged = true;
-        window.location.reload();
+        this.logged = true;     
         this.alertUser("Login successful", "success");
+        window.location.reload();
       }
       //this.username = "";
       this.password = "";
@@ -846,7 +864,7 @@ export default Vue.extend({
       } else {
         this.signUpDialog = false;
         this.loginDialog = true;
-        this.alertUser("Login successful", "success");
+        this.alertUser("Sign-up successful", "success");
       }
       this.sUsername = "";
       this.sPass = "";
@@ -889,6 +907,7 @@ export default Vue.extend({
     goToMarker(item: { title: string; lat: number; lng: number }) {
       this.showList = false;
       this.map.setView(new L.LatLng(item.lat, item.lng), this.map.getMaxZoom());
+      this.alertUser("Location found. Click on it!", "success");
     },
     toggleSharedMarkers() {
       if (this.sharedMarkersActive) {
